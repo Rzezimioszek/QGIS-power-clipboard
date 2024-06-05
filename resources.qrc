@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/plugins/power_clipboard" >
+        <file>icon.png</file>
+        <file>icons/copyXY.png</file>
+        <file>icons/copyYX.png</file>
+		<file>icons/zoomXY.png</file>
+        <file>icons/zoomYX.png</file>
+    </qresource>
+</RCC>
