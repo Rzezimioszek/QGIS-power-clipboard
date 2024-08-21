@@ -6,11 +6,16 @@
 name=Power Clipboard
 qgisMinimumVersion=3.0
 description=Plugin to easy copy/zoom to XY/YX coords.
-version=0.2
+version=0.3
 author=Łukasz Świątek
 email=lukasz.swiatek1996@gmail.com
 
-about=Four buttons gives option to quick copy or zoom to coords in format XY, YX seperate by tabulation, space or comma (if dot is decimal separator, and comma is coord separator otherwise comma is repleced by dot as decimal separator).
+about=
+	EN:
+	Four buttons gives option to quick copy or zoom to coords in format XY, YX seperate by tabulation, space or comma (if dot is decimal separator, and comma is coord separator otherwise comma is repleced by dot as decimal separator). 
+	
+	PL:
+	Plugin dodaje 4 przyciski pozwalające na szybkie kopiowanie/zoomowanie do współrzednych w formacie XY, YX rozdzielonych tablulacją, spacją lub przecinkiem. (Jeżeli kropka jest separatorem dziesiętnym, a przecinek rozdziela X od Y, w przeciwnej sytuwacji przecinek jest traktowany jako separator dziesiętny)
 
 tracker=https://github.com/Rzezimioszek/QGIS-power-clipboard/issues
 repository=https://github.com/Rzezimioszek/QGIS-power-clipboard
@@ -21,8 +26,8 @@ repository=https://github.com/Rzezimioszek/QGIS-power-clipboard
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog= 
-    0.2 Update list of needed plugins
-	0.1 first release
+	0.3 Rapair pyperclip error
+    0.1 first release
         4 buttons
         2 function
         2 coords format
@@ -42,7 +47,7 @@ deprecated=False
 # Since QGIS 3.8, a comma separated list of plugins to be installed
 # (or upgraded) can be specified.
 # Check the documentation for more information.
-plugin_dependencies=pyperclip
+# plugin_dependencies=
 
 Category of the plugin: Raster, Vector, Database or Web
 # category=
