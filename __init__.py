@@ -25,6 +25,8 @@
 
 import subprocess
 from qgis.core import Qgis
+import os
+import site
 
 
 # noinspection PyPep8Naming
@@ -40,6 +42,8 @@ def classFactory(iface):  # pylint: disable=invalid-name
         import pyperclip
     except ImportError:
         res = subprocess.call(['python3', "-m", "pip", "install", 'pyperclip'])
+        site.addsitedir(os.path.abspath(os.path.dirname(__file__) + '/libs'))
+        
         if res == 0:
             import pyperclip
         else:
