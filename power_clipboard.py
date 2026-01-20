@@ -21,10 +21,10 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QVariant, Qt
+from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QVariant, Qt, QPoint
 from qgis.PyQt.QtGui import QIcon, QPixmap, QKeySequence
-from qgis.PyQt.QtWidgets import QAction, QToolBar, QShortcut, QWidget, QLabel
-from qgis.gui import QgsMessageBar, QgsMapToolEmitPoint, QgsDockWidget
+from qgis.PyQt.QtWidgets import QAction, QToolBar, QShortcut, QWidget, QLabel, QApplication, QFrame, QVBoxLayout
+from qgis.gui import QgsMessageBar, QgsMapToolEmitPoint, QgsDockWidget, QgsMapTool, QgsMapCanvas
 from qgis.core import Qgis, QgsVectorLayer, QgsGeometry, QgsFeature, QgsProject, QgsField, \
     QgsCoordinateReferenceSystem, QgsPoint, QgsCoordinateTransform, QgsMessageLog, QgsRectangle
 # Initialize Qt resources from file resources.py
@@ -34,7 +34,84 @@ from .resources import *
 from .power_clipboard_dockwidget import PowerClipboardDockWidget
 import os.path
 
-import pyperclip as clip
+
+class ZoomMagnifierTool(QgsMapTool):
+    def __init__(self, canvas, callback):
+        super().__init__(canvas)
+        self.canvas = canvas
+        self.callback = callback
+        self.magnifier = None
+        self.mag_canvas = None
+
+    def create_magnifier(self):
+        self.magnifier = QFrame(self.canvas.parentWidget(), Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.magnifier.setFixedSize(250, 250)
+        self.magnifier.setStyleSheet("border: 1px solid black;")
+        
+        layout = QVBoxLayout(self.magnifier)
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.mag_canvas = QgsMapCanvas(self.magnifier)
+        self.mag_canvas.setLayers(self.canvas.layers())
+        self.mag_canvas.setDestinationCrs(self.canvas.mapSettings().destinationCrs())
+        self.mag_canvas.enableAntiAliasing(True)
+        
+        layout.addWidget(self.mag_canvas)
+        
+        # Add crosshair lines (full span)
+        # Center is 125 (250/2)
+        
+        # Horizontal line
+        line_h = QFrame(self.magnifier)
+        line_h.setFixedSize(250, 1) # Full width, 1px height
+        line_h.setStyleSheet("background-color: black; border: none;")
+        line_h.move(0, 125)
+        
+        # Vertical line
+        line_v = QFrame(self.magnifier)
+        line_v.setFixedSize(1, 250) # 1px width, full height
+        line_v.setStyleSheet("background-color: black; border: none;")
+        line_v.move(125, 0)
+        
+        self.magnifier.show()
+
+    def canvasMoveEvent(self, event):
+        point = self.toMapCoordinates(event.pos())
+        
+        if self.magnifier is None:
+            self.create_magnifier()
+        
+        # Position magnifier near cursor
+        pos = self.canvas.mapToGlobal(event.pos())
+        self.magnifier.move(pos.x() + 20, pos.y() + 20)
+        
+        # Set extent for magnifier (10x zoom)
+        # We want a fixed size in map units roughly.
+        # Use current map scale/resolution to determine window size in map units
+        # Window is 250px.
+        map_units_per_pixel = self.canvas.mapUnitsPerPixel()
+        
+        # We want a zoomed in view, say 4x zoom compared to main canvas
+        zoom_factor = 4
+        view_width = (250 * map_units_per_pixel) / zoom_factor
+        view_height = (250 * map_units_per_pixel) / zoom_factor
+        
+        rect = QgsRectangle(point.x() - view_width/2, point.y() - view_height/2, 
+                            point.x() + view_width/2, point.y() + view_height/2)
+        
+        self.mag_canvas.setExtent(rect)
+        self.mag_canvas.refresh()
+
+    def canvasReleaseEvent(self, event):
+        point = self.toMapCoordinates(event.pos())
+        self.callback(point)
+        self.deactivate()
+
+    def deactivate(self):
+        if self.magnifier:
+            self.magnifier.close()
+            self.magnifier = None
+        super().deactivate()
 
 
 class PowerClipboard:
@@ -80,8 +157,7 @@ class PowerClipboard:
         self.canvas = self.iface.mapCanvas()
         
         # out click tool will emit a QgsPoint on every click
-        self.clickTool = QgsMapToolEmitPoint(self.canvas)
-        self.clickTool.canvasClicked.connect(self.canvasClicked)
+        self.clickTool = ZoomMagnifierTool(self.canvas, self.canvasClicked)
         ###
 
         self.pluginIsActive = False
@@ -296,12 +372,12 @@ class PowerClipboard:
             coords = f"{point.x():.3f}\t{point.y():.3f}"
 
         QgsMessageLog.logMessage(str(coords), 'Power Clipboard')
-        clip.copy(coords)
+        QApplication.clipboard().setText(coords)
         self.iface.messageBar().pushMessage("Copied to clipboard:", f"{coords}", level=Qgis.Success, duration=2)
 
     def zoom_to(self, reverse):
 
-        values = clip.paste()
+        values = QApplication.clipboard().text()
 
         values = values.strip()
 

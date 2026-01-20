@@ -23,10 +23,8 @@
  This script initializes the plugin, making it known to QGIS.
 """
 
-import subprocess
-from qgis.core import Qgis
 import os
-import site
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 
 
 # noinspection PyPep8Naming
@@ -36,20 +34,5 @@ def classFactory(iface):  # pylint: disable=invalid-name
     :param iface: A QGIS interface instance.
     :type iface: QgsInterface
     """
-    #
-    
-    try:
-        import pyperclip
-    except ImportError:
-        res = subprocess.call(['python3', "-m", "pip", "install", 'pyperclip'])
-        site.addsitedir(os.path.abspath(os.path.dirname(__file__) + '/libs'))
-        
-        if res == 0:
-            import pyperclip
-        else:
-            iface.messageBar().pushMessage('Power Clipboard',
-                                           'Import modułu "pyperclip" zakończony niepowodzeniem, zalecamy manualne zainstalowanie zależności',
-                                           level=Qgis.Warning, duration=3)
-                                           
     from .power_clipboard import PowerClipboard
     return PowerClipboard(iface)
