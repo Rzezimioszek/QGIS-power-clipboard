@@ -384,8 +384,17 @@ class PowerClipboard:
         if "." in values and "," in values:
            values = values.replace(",", "\t")
 
-        values = values.replace(",", ".")
-        values = values.replace(" ", "\t")
+        for tr in [[",","."], ["\n","\t"], ["X(N):", ""], ["Y(E):",""], ["X",""], ["Y", ""], ["m", ""], [" ","\t"]]:
+            values = values.replace(tr[0],tr[1])
+
+        while True:
+            if "\t\t" in values:
+                values = values.replace("\t\t","\t")
+            else:
+                break
+
+        values = values.strip()
+
         splt= values.split("\t")
 
         a, b = 1, 0
